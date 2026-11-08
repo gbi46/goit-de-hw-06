@@ -48,8 +48,34 @@ averages = (
     )
 )
 
+conditions = (
+    spark.read.option("header", True)
+    .option("inferSchema", True)
+    .csv("alerts_conditions.csv")
+)
+
+alerts = (
+    averages.crossJoin(conditions)
+    .filter(
+        ((col("humidity_min") != -999) & col("average_humidity").between(
+            col("humidity_min"), col("humidity_max")
+        ))
+        | ((col("temperature_min") != -999) & col("average_temperature").between(
+            col("temperature_min"), col("temperature_max")
+        ))
+    )
+    .select(
+        col("window.start").alias("window_start"),
+        col("window.end").alias("window_end"),
+        "average_temperature",
+        "average_humidity",
+        col("code").alias("alert_code"),
+        "message",
+    )
+)
+
 query = (
-    averages.writeStream.outputMode("append")
+    alerts.writeStream.outputMode("append")
     .format("console")
     .option("truncate", False)
     .option("checkpointLocation", "./checkpoint/average_sensors")
