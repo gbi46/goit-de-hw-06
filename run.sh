@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$#" -ne 1 ]; then
-    echo "Usage: ./run.sh {produce_sensors|average_sensors}"
+    echo "Usage: ./run.sh {produce_sensors|average_sensors|consume_alerts}"
     exit 1
 fi
 
@@ -24,12 +24,12 @@ then
 fi
 
 case "$1" in
-    produce_sensors|average_sensors)
+    produce_sensors|average_sensors|consume_alerts)
         exec python3 "$1.py"
         ;;
     *)
         echo "Unknown command: $1"
-        echo "Usage: ./run.sh {produce_sensors|average_sensors}"
+        echo "Usage: ./run.sh {produce_sensors|average_sensors|consume_alerts}"
         exit 1
         ;;
 esac

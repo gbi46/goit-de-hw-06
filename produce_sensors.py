@@ -20,7 +20,7 @@ try:
     while True:
         data = {
             "id": random.randint(1, 1_000_000),
-            "temperature": round(random.uniform(25, 45), 2),
+            "temperature": round(random.uniform(45, 55), 2),
             "humidity": round(random.uniform(15, 85), 2),
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
