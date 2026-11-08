@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import avg, col, from_json, to_timestamp, window
+from pyspark.sql.functions import avg, col, current_timestamp, from_json, struct, to_json, to_timestamp, window
 from pyspark.sql.types import DoubleType, IntegerType, StringType, StructField, StructType
 
 from configs import kafka_config
@@ -67,20 +67,25 @@ alerts = (
         ))
     )
     .select(
-        col("window.start").alias("window_start"),
-        col("window.end").alias("window_end"),
-        "average_temperature",
-        "average_humidity",
-        col("code").alias("alert_code"),
+        "window",
+        col("average_temperature").alias("t_avg"),
+        col("average_humidity").alias("h_avg"),
+        col("code").cast("string").alias("code"),
         "message",
+        current_timestamp().alias("timestamp"),
     )
 )
 
 query = (
-    alerts.writeStream.outputMode("append")
-    .format("console")
-    .option("truncate", False)
-    .option("checkpointLocation", "./checkpoint/average_sensors")
+    alerts.select(to_json(struct("*")).alias("value"))
+    .writeStream.outputMode("append")
+    .format("kafka")
+    .option("kafka.bootstrap.servers", ",".join(kafka_config["bootstrap_servers"]))
+    .option("topic", "building_sensors_alerts")
+    .option("kafka.security.protocol", kafka_config["security_protocol"])
+    .option("kafka.sasl.mechanism", kafka_config["sasl_mechanism"])
+    .option("kafka.sasl.jaas.config", jaas)
+    .option("checkpointLocation", "./checkpoint/sensor_alerts_kafka")
     .start()
 )
 
