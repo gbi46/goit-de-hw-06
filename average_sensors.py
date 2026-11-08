@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import avg, col, from_json, to_timestamp, window
 from pyspark.sql.types import DoubleType, IntegerType, StringType, StructField, StructType
@@ -51,7 +53,7 @@ averages = (
 conditions = (
     spark.read.option("header", True)
     .option("inferSchema", True)
-    .csv("alerts_conditions.csv")
+    .csv(str(Path(__file__).with_name("alerts_conditions.csv")))
 )
 
 alerts = (
@@ -82,4 +84,10 @@ query = (
     .start()
 )
 
-query.awaitTermination()
+try:
+    query.awaitTermination()
+except KeyboardInterrupt:
+    pass
+finally:
+    query.stop()
+    spark.stop()
